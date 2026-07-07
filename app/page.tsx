@@ -995,6 +995,10 @@ export default function Home() {
                             src={p.src}
                             alt={p.caption}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            style={{
+                              objectPosition: i === 0 ? "center top" : "center",
+                              transform: i === 5 ? "scale(1.5)" : undefined,
+                            }}
                             onError={(e) => {
                               const el = e.target as HTMLImageElement;
                               el.style.display = "none";
