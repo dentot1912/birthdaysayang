@@ -668,7 +668,7 @@ export default function Home() {
                   className="font-serif italic text-lg sm:text-xl md:text-2xl tracking-[0.2em] tracking-wide text-[#C6B3A2] animate-slide-up"
                   style={{ animationDelay: "260ms" }}
                 >
-                  My Love
+                  Eduh
                 </h3>
               </div>
 
