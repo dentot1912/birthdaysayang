@@ -186,9 +186,123 @@ function TabTransitionVeil({ active }: { active: boolean }) {
   );
 }
 
+const slides = [
+  {
+    id: 0,
+    title: "Untuk Semestaku",
+    decor: "✨",
+    message: "Sejak ada kamu, duniaku jadi jauh lebih indah, hangat, dan penuh warna. Terima kasih telah hadir membawa bahagia di setiap hariku. Happy Birthday, sayang!",
+    bgClass: "from-[#FDFBF7] to-[#F5ECE2] text-[#3E2E2B]",
+    borderClass: "border-[#D3C1AD]",
+    accentColor: "#8A7068"
+  },
+  {
+    id: 1,
+    title: "Hal Terfavorit",
+    decor: "💖",
+    message: "Terima kasih sudah menjadi bagian terpenting dalam hidupku. Senyum dan ketawamu selalu menjadi hal terfavorit yang paling ingin aku lihat setiap hari.",
+    bgClass: "from-[#F5E5E9] to-[#E8D4D8] text-[#4E2E33]",
+    borderClass: "border-[#C6B3B9]",
+    accentColor: "#C08A93"
+  },
+  {
+    id: 2,
+    title: "Doa & Harapan",
+    decor: "🌟",
+    message: "Di hari spesialmu ini, aku berdoa semoga semua impian dan cita-citamu tercapai. Aku akan selalu ada di sampingmu untuk mendukungmu di setiap langkah.",
+    bgClass: "from-[#F1F3F5] to-[#E2E6EA] text-[#2B3E50]",
+    borderClass: "border-[#C1CAD2]",
+    accentColor: "#7B92A6"
+  },
+  {
+    id: 3,
+    title: "Anugerah Terindah",
+    decor: "🌹",
+    message: "Terima kasih atas segala kesabaran, tawa hangat, dan kasih sayang tulus yang kamu berikan. Bersamamu adalah anugerah paling berharga dalam hidupku.",
+    bgClass: "from-[#FAF0E6] to-[#EEDC9A]/20 text-[#3E2E2B]",
+    borderClass: "border-[#E3C57B]",
+    accentColor: "#B0954E"
+  },
+  {
+    id: 4,
+    title: "Selamanya Kita",
+    decor: "💕",
+    message: "Semoga hari ini penuh dengan kebahagiaan yang melimpah, persis seperti kebahagiaan yang selalu kamu bawa ke hidupku selama ini. I love you so much!",
+    bgClass: "from-[#FDF2F8] to-[#FCE7F3] text-[#5C2140]",
+    borderClass: "border-[#F9A8D4]",
+    accentColor: "#DB2777"
+  }
+];
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<string>("happy-birthday");
   const [tabTransitioning, setTabTransitioning] = useState<boolean>(false);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  
+  const dragStartX = useRef<number | null>(null);
+  const dragEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const totalSlides = 5;
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  };
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    dragEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!dragStartX.current || !dragEndX.current) return;
+    const distance = dragStartX.current - dragEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+    dragStartX.current = null;
+    dragEndX.current = null;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragStartX.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (dragStartX.current !== null) {
+      dragEndX.current = e.clientX;
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!dragStartX.current || !dragEndX.current) return;
+    const distance = dragStartX.current - dragEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+    dragStartX.current = null;
+    dragEndX.current = null;
+  };
+
+  const handleMouseLeave = () => {
+    dragStartX.current = null;
+    dragEndX.current = null;
+  };
 
   // Smooth tab-switch: flash veil in → swap tab → fade veil out
   const switchTab = (id: string) => {
@@ -196,6 +310,9 @@ export default function Home() {
     setTabTransitioning(true);
     setTimeout(() => {
       setActiveTab(id);
+      if (id === "the") {
+        setCurrentSlide(0);
+      }
       // Give the new tab a frame to mount before fading the veil out
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -740,29 +857,9 @@ export default function Home() {
           )}
 
 
-          {/* THE TAB: Full-screen photo gallery with lace frames */}
+          {/* THE TAB: Full-screen photo gallery / message slider */}
           {activeTab === "the" && (
             <div className="fixed inset-0 z-50 overflow-hidden flex flex-col md:flex-row" style={{ background: "#3A2825" }}>
-
-              {/* Left panel — script title (hidden on mobile, shown md+) */}
-              <div className="relative md:flex hidden items-center justify-center w-[48%] shrink-0 z-10">
-                <h2
-                  className="font-script text-[clamp(2.4rem,6vw,5.5rem)] text-[#EAD5C3]/90 leading-tight px-8 select-none animate-slide-right"
-                  style={{ textShadow: "0 2px 24px rgba(0,0,0,0.4)", animationDelay: "150ms" }}
-                >
-                  Happy 21st<br />Birthday
-                </h2>
-              </div>
-
-              {/* Mobile title overlay */}
-              <div className="md:hidden absolute top-6 left-0 right-0 text-center z-30 pointer-events-none">
-                <h2
-                  className="font-script text-4xl text-[#EAD5C3]/90 animate-slide-down"
-                  style={{ textShadow: "0 2px 24px rgba(0,0,0,0.7)", animationDelay: "150ms" }}
-                >
-                  Happy 21st Birthday
-                </h2>
-              </div>
 
               {/* Right panel — burgundy textured fabric bg (full width on mobile) */}
               <div
@@ -780,32 +877,117 @@ export default function Home() {
                 />
               </div>
 
-              {/* Photo Gallery — overlapping both panels */}
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 md:gap-4 px-4 md:px-8 py-20 md:py-16 overflow-y-auto">
+              {/* Message Slider — overlapping both panels */}
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 px-4 py-20 overflow-y-auto">
+                <div className="relative w-full max-w-xl mx-auto flex flex-col items-center gap-6 animate-scale-up" style={{ animationDelay: "200ms" }}>
+                  
+                  {/* Scrapbook / Vintage backing paper */}
+                  <div className="relative w-full p-4 sm:p-6 rounded-2xl bg-[#EAD5C3] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#C6B3A2] overflow-hidden">
+                    {/* Binder ring holes on the left side (notebook look) */}
+                    <div className="absolute left-2 top-0 bottom-0 flex flex-col justify-around py-4 pointer-events-none opacity-40">
+                      {Array.from({ length: 6 }).map((_, idx) => (
+                        <div key={idx} className="w-3 h-3 rounded-full bg-[#3A2825] border border-white/20" />
+                      ))}
+                    </div>
 
-                {/* Row 1 — 4 photos */}
-                <div className="flex gap-2 sm:gap-4 md:gap-6 justify-center items-center flex-wrap">
-                  {[
-                    { src: "/assets/photo1.jpg", w: 80,  h: 65,  wMd: 110, hMd: 90,  delay: "220ms" },
-                    { src: "/assets/photo2.jpg", w: 75,  h: 60,  wMd: 100, hMd: 85,  delay: "280ms" },
-                    { src: "/assets/photo3.jpg", w: 80,  h: 68,  wMd: 115, hMd: 95,  delay: "340ms" },
-                    { src: "/assets/photo4.jpg", w: 78,  h: 65,  wMd: 105, hMd: 90,  delay: "400ms" },
-                  ].map((p, idx) => (
-                    <LacePhotoFrame key={idx} src={p.src} w={p.w} h={p.h} delay={p.delay} />
-                  ))}
-                </div>
+                    {/* Slider viewport */}
+                    <div className="relative overflow-hidden w-full pl-6 rounded-lg">
+                      <div
+                        className="flex transition-transform duration-500 ease-out"
+                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        {slides.map((slide) => (
+                          <div
+                            key={slide.id}
+                            className="w-full shrink-0 px-2 sm:px-4 py-2 select-none cursor-grab active:cursor-grabbing"
+                          >
+                            {/* Card Body */}
+                            <div className={`relative w-full aspect-[4/3] sm:aspect-[16/11] bg-gradient-to-br ${slide.bgClass} p-6 sm:p-8 rounded-xl shadow-md border-2 ${slide.borderClass} flex flex-col justify-between overflow-hidden transition-transform duration-300 hover:rotate-1`}>
+                              
+                              {/* Diagonal Stamp in top right corner */}
+                              <div className="absolute -top-1 -right-1 w-14 h-14 opacity-20 pointer-events-none">
+                                <svg viewBox="0 0 100 100" fill="currentColor">
+                                  <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" />
+                                  <text x="50" y="55" textAnchor="middle" fontSize="12" fontWeight="bold">POST</text>
+                                </svg>
+                              </div>
 
-                {/* Row 2 — 5 photos, middle larger */}
-                <div className="flex gap-2 sm:gap-3 md:gap-5 justify-center items-center flex-wrap">
-                  {[
-                    { src: "/assets/photo5.jpg",  w: 65,  h: 58,  delay: "300ms" },
-                    { src: "/assets/photo6.jpg",  w: 72,  h: 63,  delay: "360ms" },
-                    { src: "/assets/photo7.jpg",  w: 100, h: 86,  delay: "420ms" },
-                    { src: "/assets/photo8.jpg",  w: 68,  h: 60,  delay: "480ms" },
-                    { src: "/assets/photo9.jpg",  w: 65,  h: 56,  delay: "540ms" },
-                  ].map((p, idx) => (
-                    <LacePhotoFrame key={idx} src={p.src} w={p.w} h={p.h} delay={p.delay} />
-                  ))}
+                              {/* Decorative corner stars */}
+                              <div className="absolute top-2.5 left-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
+                              <div className="absolute top-2.5 right-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
+                              <div className="absolute bottom-2.5 left-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
+                              <div className="absolute bottom-2.5 right-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
+
+                              {/* Card Header */}
+                              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                <span className="text-2xl sm:text-3xl animate-pulse">{slide.decor}</span>
+                                <h3 className="font-script text-3xl sm:text-4xl md:text-5xl font-bold tracking-wide" style={{ color: slide.accentColor }}>
+                                  {slide.title}
+                                </h3>
+                              </div>
+
+                              {/* Card Body Message */}
+                              <div className="flex-1 flex items-center justify-center py-2 sm:py-4 px-2 sm:px-4">
+                                <p className="font-serif text-sm sm:text-base md:text-lg text-center leading-relaxed italic font-medium opacity-90 select-text">
+                                  "{slide.message}"
+                                </p>
+                              </div>
+
+                              {/* Card Footer */}
+                              <div
+                                className="flex justify-between items-center text-[10px] sm:text-xs tracking-widest font-sans uppercase font-semibold opacity-60 border-t pt-3"
+                                style={{ borderColor: `${slide.accentColor}25`, color: slide.accentColor }}
+                              >
+                                <span>UNTUKMU ❤️</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation & Controls Section */}
+                  <div className="w-full flex items-center justify-between px-2">
+                    {/* Left Button */}
+                    <button
+                      onClick={prevSlide}
+                      className="w-10 h-10 rounded-full bg-[#EAD5C3]/10 hover:bg-[#EAD5C3]/20 border border-[#EAD5C3]/30 hover:border-[#EAD5C3] text-[#EAD5C3] flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer shadow-md"
+                      aria-label="Previous message"
+                    >
+                      <span className="text-lg">←</span>
+                    </button>
+
+                    {/* Dot Indicators */}
+                    <div className="flex gap-2.5">
+                      {slides.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentSlide(idx)}
+                          className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                            currentSlide === idx ? "w-6 bg-[#EAD5C3]" : "w-2.5 bg-[#EAD5C3]/40 hover:bg-[#EAD5C3]/75"
+                          }`}
+                          aria-label={`Go to slide ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Right Button */}
+                    <button
+                      onClick={nextSlide}
+                      className="w-10 h-10 rounded-full bg-[#EAD5C3]/10 hover:bg-[#EAD5C3]/20 border border-[#EAD5C3]/30 hover:border-[#EAD5C3] text-[#EAD5C3] flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer shadow-md"
+                      aria-label="Next message"
+                    >
+                      <span className="text-lg">→</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
