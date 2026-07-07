@@ -129,7 +129,7 @@ function getStampPath(width: number, height: number, r = 4, spacing = 12) {
 }
 
 // Photo filmstrip component used in the My Life tab
-function PhotoStrip({ photos, bgStyle, rotateClass }: { photos: string[]; bgStyle: any; rotateClass?: string }) {
+function PhotoStrip({ photos, bgStyle, rotateClass }: { photos: string[]; bgStyle: React.CSSProperties; rotateClass?: string }) {
   return (
     <div
       className={`p-3 pt-4 pb-4 flex flex-col justify-between shadow-2xl rounded-sm ${rotateClass || ""} transition-all duration-300 hover:scale-105 hover:rotate-0 z-20 relative`}
@@ -384,7 +384,7 @@ export default function Home() {
     }
 
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioContextClass();
       audioCtxRef.current = ctx;
 
@@ -700,7 +700,7 @@ export default function Home() {
                 className="font-serif text-base sm:text-lg md:text-xl text-[#EAD5C3]/90 max-w-sm sm:max-w-md leading-relaxed mt-2 animate-slide-up"
                 style={{ animationDelay: "420ms" }}
               >
-                Are you excited to see what I've prepared for you?!
+                Are you excited to see what I&apos;ve prepared for you?!
               </p>
 
               {/* Pill CTA Buttons */}
@@ -800,6 +800,10 @@ export default function Home() {
                     >
                       <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-lg">
                         <defs>
+                          {/* Clip path for the heart shape */}
+                          <clipPath id={`heart-clip-${i}`}>
+                            <path d="M100 165 C100 165 22 116 22 64 C22 39 42 22 67 29 C82 33 100 50 100 50 C100 50 118 33 133 29 C158 22 178 39 178 64 C178 116 100 165 100 165Z" />
+                          </clipPath>
                           {/* Radial gradient for heart fill */}
                           <radialGradient id={`hg${i}`} cx="42%" cy="35%" r="65%">
                             <stop offset="0%" stopColor="#8A7068" stopOpacity="0.9" />
@@ -816,10 +820,20 @@ export default function Home() {
                           </filter>
                         </defs>
 
-                        {/* Heart body with gradient */}
+                        {/* Heart body with gradient (fallback background) */}
                         <path
                           d="M100 165 C100 165 22 116 22 64 C22 39 42 22 67 29 C82 33 100 50 100 50 C100 50 118 33 133 29 C158 22 178 39 178 64 C178 116 100 165 100 165Z"
                           fill={`url(#hg${i})`}
+                        />
+
+                        {/* Cropped head image inside the heart */}
+                        <image
+                          href="/assets/icon.jpeg"
+                          x="-20"
+                          y="-55"
+                          width="240"
+                          height="427"
+                          clipPath={`url(#heart-clip-${i})`}
                         />
 
                         {/* Highlight shimmer at top-left */}
@@ -928,7 +942,6 @@ export default function Home() {
 
               {/* Header */}
               <div className="relative z-10 pt-10 pb-4 px-6 text-center animate-fade-in">
-                <p className="font-serif text-[#EAD5C3]/50 text-xs tracking-[0.3em] uppercase mb-2">our memories</p>
                 <h2
                   className="font-script text-4xl sm:text-5xl md:text-6xl"
                   style={{
@@ -936,7 +949,7 @@ export default function Home() {
                     textShadow: "0 2px 20px rgba(234,213,195,0.3)",
                   }}
                 >
-                  Foto Kita
+                  Foto Kamuu
                 </h2>
                 <div className="mt-3 flex items-center justify-center gap-3">
                   <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#EAD5C3]/40" />
@@ -949,14 +962,14 @@ export default function Home() {
               <div className="relative z-10 px-4 sm:px-8 pb-28 pt-4">
                 <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 sm:gap-4 space-y-3 sm:space-y-4 max-w-4xl mx-auto">
                   {[
-                    { src: "/photos/foto1.jpg", caption: "Moment kita 💕", rotate: "-rotate-2", delay: "0ms", tall: false },
-                    { src: "/photos/foto2.jpg", caption: "Selalu happy 🌸", rotate: "rotate-1", delay: "60ms", tall: true },
-                    { src: "/photos/foto3.jpg", caption: "Aku sayang kamu ❤️", rotate: "-rotate-1", delay: "120ms", tall: false },
-                    { src: "/photos/foto4.jpg", caption: "Kenangan indah ✨", rotate: "rotate-2", delay: "180ms", tall: true },
-                    { src: "/photos/foto5.jpg", caption: "Together always 💖", rotate: "-rotate-3", delay: "240ms", tall: false },
-                    { src: "/photos/foto6.jpg", caption: "My favourite day 🌹", rotate: "rotate-1", delay: "300ms", tall: true },
-                    { src: "/photos/foto7.jpg", caption: "So beautiful 💗", rotate: "rotate-2", delay: "360ms", all: false },
-                    { src: "/photos/foto8.jpg", caption: "Kamu segalanya 🌟", rotate: "-rotate-1", delay: "420ms", tall: false },
+                    { src: "assets/foto1.jpeg", caption: "Moment kita 💕", rotate: "-rotate-2", delay: "0ms", tall: false },
+                    { src: "assets/foto2.jpeg", caption: "Selalu happy 🌸", rotate: "rotate-1", delay: "60ms", tall: true },
+                    { src: "assets/foto3.jpeg", caption: "Aku sayang kamu ❤️", rotate: "-rotate-1", delay: "120ms", tall: false },
+                    { src: "assets/foto4.jpeg", caption: "Kenangan indah ✨", rotate: "rotate-2", delay: "180ms", tall: true },
+                    { src: "assets/foto5.jpeg", caption: "Together always 💖", rotate: "-rotate-3", delay: "240ms", tall: false },
+                    { src: "assets/foto6.jpeg", caption: "My favourite day 🌹", rotate: "rotate-1", delay: "300ms", tall: true },
+                    { src: "assets/foto7.jpeg", caption: "So beautiful 💗", rotate: "rotate-2", delay: "360ms", all: false },
+                    { src: "assets/foto8.jpeg", caption: "Kamu segalanya 🌟", rotate: "-rotate-1", delay: "420ms", tall: false },
                   ].map((p, i) => (
                     <div
                       key={i}
@@ -987,11 +1000,6 @@ export default function Home() {
                               el.style.display = "none";
                             }}
                           />
-                          {/* Placeholder when no image */}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 pointer-events-none">
-                            <span className="text-3xl opacity-20 select-none">📷</span>
-                            <span className="text-[#EAD5C3]/15 text-[10px] font-sans select-none">foto {i + 1}</span>
-                          </div>
                           {/* Subtle gloss overlay */}
                           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none rounded-[2px]" />
                         </div>
@@ -1166,7 +1174,7 @@ export default function Home() {
                     style={{ width: "min(640px, 94vw)", aspectRatio: "16/9", padding: "clamp(10px,3vw,28px)", background: "rgba(30,15,10,0.6)" }}
                   >
                     <iframe
-                      src="https://www.youtube.com/embed/DNRmkDzCFmA?si=auto"
+                      src="https://www.youtube.com/embed/pjhOjHDX0A8?si=WmYi1Jgh3oHEynL9"
                       title="This song is for you"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -1317,7 +1325,7 @@ export default function Home() {
                           {/* Message Body */}
                           <div className="flex-1 flex items-center justify-center py-2">
                             <p className="font-serif text-[#1A1A1A]/90 text-xs sm:text-[13px] leading-relaxed text-center italic select-text">
-                              "{card.text}"
+                              &ldquo;{card.text}&rdquo;
                             </p>
                           </div>
 
@@ -1351,7 +1359,7 @@ export default function Home() {
                           style={{ aspectRatio: "3/4", borderRadius: "1px" }}
                         >
                           <img
-                            src="/photos/about-you.jpg"
+                            src="/assets/foto9.jpeg"
                             alt="About You"
                             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                             onError={(e) => {
@@ -1361,11 +1369,6 @@ export default function Home() {
                           {/* Shadows inside */}
                           <div className="absolute inset-0 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
                           
-                          {/* Image Placeholder */}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-                            <span className="text-5xl opacity-20 animate-pulse text-[#EAD5C3]">📷</span>
-                          </div>
-
                           {/* Film Shine Sweep */}
                           <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 pointer-events-none opacity-60 group-hover:translate-x-full transition-transform duration-1000 ease-out" />
                         </div>
@@ -1374,9 +1377,6 @@ export default function Home() {
                         <div className="mt-4 border-t border-[#D4AF37]/25 pt-2.5 text-center flex flex-col gap-0.5 select-none">
                           <span className="font-script text-[#EAD5C3] text-lg md:text-xl tracking-wide">
                             my person 💕
-                          </span>
-                          <span className="font-sans text-[7.5px] text-[#D4AF37] tracking-[0.25em] uppercase font-bold">
-                            est. memory
                           </span>
                         </div>
                       </div>
@@ -1462,7 +1462,7 @@ export default function Home() {
                           {/* Message Body */}
                           <div className="flex-1 flex items-center justify-center py-2">
                             <p className="font-serif text-[#1A1A1A]/90 text-xs sm:text-[13px] leading-relaxed text-center italic select-text">
-                              "{card.text}"
+                              &ldquo;{card.text}&rdquo;
                             </p>
                           </div>
 
@@ -1628,10 +1628,22 @@ export default function Home() {
 
                     {/* Letter Content */}
                     <div className="text-[#111111] font-script text-left h-full flex flex-col justify-between pt-1">
-                      <p className="select-text pr-10 sm:pr-14 pl-1 sm:pl-2 pt-1 text-[12px] sm:text-[15px] md:text-[16.5px] leading-[1.35] sm:leading-[1.4] md:leading-[1.55]">
-                        Happy birthday, my love. I'm so grateful for you – for your patience, your kindness, and the way you always make things feel lighter just by being around. Thank you for choosing me every day and for loving me in the quiet, simple ways that mean the most. I hope this year brings you everything you've been working toward, and I'll be right here cheering you on, always.
+                      <p className="select-text pr-10 sm:pr-14 pl-1 sm:pl-2 pt-1 text-[12px] sm:text-[15px] md:text-[16.5px] leading-[1.35] sm:leading-[1.4] md:leading-[1.55] overflow-y-auto max-h-[145px] sm:max-h-[200px] letter-scrollbar">
+                        {"Happy birthday my loovee-11 💗"}
+                        <br /><br />
+                        {"It's your special dayy. Wish you all the best yaa. Eduhh maafff yaaa kalau sampai sekarang akuuu belum bisaa kasih hal yang wow buat kamuuu. Maafff juga kalau akuuu masii banyak kurangnyaa dan belum jadi yang terbaik. But trust me, I always try my best for u."}
+                        <br /><br />
+                        {"Selamatt bertambah usiaa sayangkuu. Semogaaa di umur kamu sekarang kamu makin dewasa, makin bahagia, makin disayang banyak orang, dan tentu aja makin sayang sama keluargaa dan akuu jugaa xixixi. Sayangku yang satu inii hebattt bangettt. Kamu udah lewatin banyak hal sampai bisa ada di titik sekarang. Mungkin orang lain nggak semuanya tau perjuangan kamu, tapi aku tau kamu sekuat itu. Dan aku bangga banget punya kamu."}
+                        <br /><br />
+                        {"Do you know? God loves you so much, jadi jangan pernah ngerasa sendiri yaa. Kalau dunia lagi capekinn kamu, kalau pikiran lagi rame, inget masih ada aku yang selalu dukung kamu dan peduli sama kamu. I looovee yooouuu 🤍"}
+                        <br /><br />
+                        {"Makasih yaa udah lahir ke dunia ini, makasih udah tumbuh jadi orang sebaik kamu, makasih udah bertahan di hari-hari yang nggak gampang, dan makasih juga udah hadir di hidup aku. Kamu tuh salah satu hal baik yang pernah aku temuin."}
+                        <br /><br />
+                        {"Di umur kamu yang baru ini, aku cuma mau doa yang baik-baik buat kamu. Semoga langkah kamu selalu dipermudah, rezeki kamu dilancarin, hati kamu selalu tenang, dan semua yang kamu pengenin bisa pelan-pelan tercapai. Tetap jadi kamu yang aku kenal yaa, yang baik, yang tulus, yang kadang nyebelin tapi selalu bikin kangen."}
+                        <br /><br />
+                        {"Happy birthday once again, my lovee. I'm really grateful to have youu. I hope this year becomes one of the happiest chapters of your life, and I hope I can keep being a part of it. I love you today, tomorrow, and every day after that. 🤍"}
                       </p>
-                      
+                                            
                       {/* Postmark stamp */}
                       <div className="absolute bottom-4 right-4 flex items-center select-none pointer-events-none opacity-85">
                         <svg className="w-[50px] h-[30px] text-[#4E3D3A] opacity-60 mr-1" fill="none" stroke="currentColor" strokeWidth="0.8">
@@ -1655,6 +1667,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+
               </div>
 
 
