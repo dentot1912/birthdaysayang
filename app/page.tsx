@@ -55,7 +55,7 @@ function LacePhotoFrame({ src, w, h, delay }: { src: string; w: number; h: numbe
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Photo area background (shown while image loads or as placeholder) */}
-        <rect x={padding} y={padding} width={w} height={h} fill="#5C4440" rx="2" />
+        <rect x={padding} y={padding} width={w} height={h} fill="#111111" rx="2" />
 
         {/* Placeholder icon when no photo */}
         <text x={padding + w / 2} y={padding + h / 2 + 6} textAnchor="middle" fill="#EAD5C3" opacity="0.25" fontSize="22">📷</text>
@@ -144,19 +144,19 @@ function PhotoStrip({ photos, bgStyle, rotateClass }: { photos: string[]; bgStyl
       {/* Film sprocket holes left */}
       <div className="absolute left-[3px] top-0 bottom-0 flex flex-col justify-between py-3 pointer-events-none z-30">
         {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={idx} className="w-1.5 h-2.5 bg-[#3E2E2B] rounded-[1px] opacity-90" />
+          <div key={idx} className="w-1.5 h-2.5 bg-[#080808] rounded-[1px] opacity-90" />
         ))}
       </div>
       
       {/* Film sprocket holes right */}
       <div className="absolute right-[3px] top-0 bottom-0 flex flex-col justify-between py-3 pointer-events-none z-30">
         {Array.from({ length: 9 }).map((_, idx) => (
-          <div key={idx} className="w-1.5 h-2.5 bg-[#3E2E2B] rounded-[1px] opacity-90" />
+          <div key={idx} className="w-1.5 h-2.5 bg-[#080808] rounded-[1px] opacity-90" />
         ))}
       </div>
 
       {photos.map((src, i) => (
-        <div key={i} className="relative w-full h-[85px] bg-[#5C4440] overflow-hidden rounded-[1px] border border-black/15 shadow-inner">
+        <div key={i} className="relative w-full h-[85px] bg-[#111111] overflow-hidden rounded-[1px] border border-black/15 shadow-inner">
           <img
             src={src}
             alt="story photo"
@@ -179,7 +179,7 @@ function TabTransitionVeil({ active }: { active: boolean }) {
       aria-hidden
       className="pointer-events-none fixed inset-0 z-[999] transition-opacity duration-300"
       style={{
-        background: "radial-gradient(ellipse at center, #3A2320 0%, #1E100D 100%)",
+        background: "radial-gradient(ellipse at center, #111 0%, #080808 100%)",
         opacity: active ? 1 : 0,
       }}
     />
@@ -192,7 +192,7 @@ const slides = [
     title: "Untuk Semestaku",
     decor: "✨",
     message: "Sejak ada kamu, duniaku jadi jauh lebih indah, hangat, dan penuh warna. Terima kasih telah hadir membawa bahagia di setiap hariku. Happy Birthday, sayang!",
-    bgClass: "from-[#FDFBF7] to-[#F5ECE2] text-[#3E2E2B]",
+    bgClass: "from-[#FDFBF7] to-[#F5ECE2] text-[#111111]",
     borderClass: "border-[#D3C1AD]",
     accentColor: "#8A7068"
   },
@@ -219,7 +219,7 @@ const slides = [
     title: "Anugerah Terindah",
     decor: "🌹",
     message: "Terima kasih atas segala kesabaran, tawa hangat, dan kasih sayang tulus yang kamu berikan. Bersamamu adalah anugerah paling berharga dalam hidupku.",
-    bgClass: "from-[#FAF0E6] to-[#EEDC9A]/20 text-[#3E2E2B]",
+    bgClass: "from-[#FAF0E6] to-[#EEDC9A]/20 text-[#111111]",
     borderClass: "border-[#E3C57B]",
     accentColor: "#B0954E"
   },
@@ -327,6 +327,47 @@ export default function Home() {
   const [claimedGift, setClaimedGift] = useState<boolean>(false);
   const [claimedTickets, setClaimedTickets] = useState<Record<number, boolean>>({});
   const [isEnvelopeOpened, setIsEnvelopeOpened] = useState<boolean>(false);
+  const [aboutYouHearts, setAboutYouHearts] = useState<{ id: number; x: number; y: number; emoji: string; size: number }[]>([]);
+
+  const spawnAboutYouHeart = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const emojis = ["❤️", "💖", "✨", "🌸", "💕", "💘", "🌹", "💗"];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const randomSize = Math.floor(Math.random() * 16) + 16;
+    const newHeart = {
+      id: Date.now() + Math.random(),
+      x,
+      y,
+      emoji: randomEmoji,
+      size: randomSize
+    };
+    setAboutYouHearts((prev) => [...prev, newHeart]);
+    setTimeout(() => {
+      setAboutYouHearts((prev) => prev.filter((h) => h.id !== newHeart.id));
+    }, 2000);
+
+    if (audioCtxRef.current) {
+      try {
+        const time = audioCtxRef.current.currentTime;
+        const osc = audioCtxRef.current.createOscillator();
+        const gain = audioCtxRef.current.createGain();
+        osc.type = "sine";
+        const freqs = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+        const randomFreq = freqs[Math.floor(Math.random() * freqs.length)];
+        osc.frequency.setValueAtTime(randomFreq, time);
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.015, time + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.6);
+        osc.connect(gain);
+        gain.connect(audioCtxRef.current.destination);
+        osc.start(time);
+        osc.stop(time + 0.6);
+      } catch (err) {}
+    }
+  };
+
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -556,7 +597,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#3E2E2B] text-[#EAD5C3] px-4 py-4 sm:px-6 sm:py-6 md:px-16 md:py-10">
+    <main className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#080808] text-[#EAD5C3] px-4 py-4 sm:px-6 sm:py-6 md:px-16 md:py-10">
       {/* Tab transition veil */}
       <TabTransitionVeil active={tabTransitioning} />
 
@@ -669,13 +710,13 @@ export default function Home() {
               >
                 <button
                   onClick={() => switchTab("to")}
-                  className="px-8 py-3 rounded-full bg-[#574944] text-[#EAD5C3] font-serif text-sm tracking-widest uppercase underline underline-offset-4 decoration-1 hover:bg-[#685954] hover:text-white transition-all duration-300 shadow-lg border border-[#EAD5C3]/15 transform hover:-translate-y-1 cursor-pointer"
+                  className="px-8 py-3 rounded-full bg-[#1A1A1A] text-[#EAD5C3] font-serif text-sm tracking-widest uppercase underline underline-offset-4 decoration-1 hover:bg-[#2A2A2A] hover:text-white transition-all duration-300 shadow-lg border border-[#EAD5C3]/15 transform hover:-translate-y-1 cursor-pointer"
                 >
                   YES!!!
                 </button>
                 <button
                   onClick={() => switchTab("to")}
-                  className="px-8 py-3 rounded-full bg-[#574944] text-[#EAD5C3] font-serif text-sm tracking-widest uppercase underline underline-offset-4 decoration-1 hover:bg-[#685954] hover:text-white transition-all duration-300 shadow-lg border border-[#EAD5C3]/15 transform hover:-translate-y-1 cursor-pointer"
+                  className="px-8 py-3 rounded-full bg-[#1A1A1A] text-[#EAD5C3] font-serif text-sm tracking-widest uppercase underline underline-offset-4 decoration-1 hover:bg-[#2A2A2A] hover:text-white transition-all duration-300 shadow-lg border border-[#EAD5C3]/15 transform hover:-translate-y-1 cursor-pointer"
                 >
                   DUHH!!!
                 </button>
@@ -685,7 +726,7 @@ export default function Home() {
 
           {/* TO TAB: Full-screen overlay with lace hearts */}
           {activeTab === "to" && (
-            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#3E2E2B] overflow-hidden">
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#080808] overflow-hidden">
 
               {/* Bow/Ribbon top-left */}
               <div
@@ -857,145 +898,125 @@ export default function Home() {
           )}
 
 
-          {/* THE TAB: Full-screen photo gallery / message slider */}
+          {/* THE TAB: Scattered Photo Gallery */}
           {activeTab === "the" && (
-            <div className="fixed inset-0 z-50 overflow-hidden flex flex-col md:flex-row" style={{ background: "#3A2825" }}>
-
-              {/* Right panel — burgundy textured fabric bg (full width on mobile) */}
-              <div
-                className="absolute right-0 top-0 bottom-0 w-full md:w-[55%] animate-fade-in"
-                style={{
-                  background: "repeating-linear-gradient(135deg, #5C1F1F 0px, #5C1F1F 2px, #6B2525 2px, #6B2525 6px, #5C1F1F 6px, #5C1F1F 8px)",
-                  animationDelay: "100ms",
-                }}
-              >
-                {/* Shimmer overlay */}
-                <div className="absolute inset-0 opacity-20"
-                  style={{
-                    background: "repeating-linear-gradient(45deg, transparent 0px, transparent 4px, rgba(255,255,255,0.04) 4px, rgba(255,255,255,0.04) 5px)",
-                  }}
-                />
+            <div
+              className="fixed inset-0 z-50 overflow-y-auto"
+              style={{
+                background: "radial-gradient(ellipse at 30% 20%, #1A0A0A 0%, #0D0D0D 40%, #080808 100%)",
+              }}
+            >
+              {/* Ambient floating hearts */}
+              <div className="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden>
+                {["❤️","💕","🌹","✨","💖","🌸","💗","✦"].map((em, i) => (
+                  <span
+                    key={i}
+                    className="absolute text-lg select-none animate-pulse"
+                    style={{
+                      left: `${8 + i * 12}%`,
+                      top: `${10 + (i % 3) * 28}%`,
+                      opacity: 0.08 + (i % 4) * 0.04,
+                      fontSize: `${14 + (i % 3) * 8}px`,
+                      animation: `float-heart ${4 + i}s ease-in-out infinite alternate`,
+                      animationDelay: `${i * 0.6}s`,
+                    }}
+                  >
+                    {em}
+                  </span>
+                ))}
               </div>
 
-              {/* Message Slider — overlapping both panels */}
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 px-4 py-20 overflow-y-auto">
-                <div className="relative w-full max-w-xl mx-auto flex flex-col items-center gap-6 animate-scale-up" style={{ animationDelay: "200ms" }}>
-                  
-                  {/* Scrapbook / Vintage backing paper */}
-                  <div className="relative w-full p-4 sm:p-6 rounded-2xl bg-[#EAD5C3] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#C6B3A2] overflow-hidden">
-                    {/* Binder ring holes on the left side (notebook look) */}
-                    <div className="absolute left-2 top-0 bottom-0 flex flex-col justify-around py-4 pointer-events-none opacity-40">
-                      {Array.from({ length: 6 }).map((_, idx) => (
-                        <div key={idx} className="w-3 h-3 rounded-full bg-[#3A2825] border border-white/20" />
-                      ))}
-                    </div>
-
-                    {/* Slider viewport */}
-                    <div className="relative overflow-hidden w-full pl-6 rounded-lg">
-                      <div
-                        className="flex transition-transform duration-500 ease-out"
-                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseLeave}
-                      >
-                        {slides.map((slide) => (
-                          <div
-                            key={slide.id}
-                            className="w-full shrink-0 px-2 sm:px-4 py-2 select-none cursor-grab active:cursor-grabbing"
-                          >
-                            {/* Card Body */}
-                            <div className={`relative w-full aspect-[4/3] sm:aspect-[16/11] bg-gradient-to-br ${slide.bgClass} p-6 sm:p-8 rounded-xl shadow-md border-2 ${slide.borderClass} flex flex-col justify-between overflow-hidden transition-transform duration-300 hover:rotate-1`}>
-                              
-                              {/* Diagonal Stamp in top right corner */}
-                              <div className="absolute -top-1 -right-1 w-14 h-14 opacity-20 pointer-events-none">
-                                <svg viewBox="0 0 100 100" fill="currentColor">
-                                  <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" />
-                                  <text x="50" y="55" textAnchor="middle" fontSize="12" fontWeight="bold">POST</text>
-                                </svg>
-                              </div>
-
-                              {/* Decorative corner stars */}
-                              <div className="absolute top-2.5 left-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
-                              <div className="absolute top-2.5 right-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
-                              <div className="absolute bottom-2.5 left-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
-                              <div className="absolute bottom-2.5 right-2.5 text-xs" style={{ color: slide.accentColor }}>✦</div>
-
-                              {/* Card Header */}
-                              <div className="flex items-center justify-center gap-2 sm:gap-3">
-                                <span className="text-2xl sm:text-3xl animate-pulse">{slide.decor}</span>
-                                <h3 className="font-script text-3xl sm:text-4xl md:text-5xl font-bold tracking-wide" style={{ color: slide.accentColor }}>
-                                  {slide.title}
-                                </h3>
-                              </div>
-
-                              {/* Card Body Message */}
-                              <div className="flex-1 flex items-center justify-center py-2 sm:py-4 px-2 sm:px-4">
-                                <p className="font-serif text-sm sm:text-base md:text-lg text-center leading-relaxed italic font-medium opacity-90 select-text">
-                                  "{slide.message}"
-                                </p>
-                              </div>
-
-                              {/* Card Footer */}
-                              <div
-                                className="flex justify-between items-center text-[10px] sm:text-xs tracking-widest font-sans uppercase font-semibold opacity-60 border-t pt-3"
-                                style={{ borderColor: `${slide.accentColor}25`, color: slide.accentColor }}
-                              >
-                                <span>UNTUKMU ❤️</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Navigation & Controls Section */}
-                  <div className="w-full flex items-center justify-between px-2">
-                    {/* Left Button */}
-                    <button
-                      onClick={prevSlide}
-                      className="w-10 h-10 rounded-full bg-[#EAD5C3]/10 hover:bg-[#EAD5C3]/20 border border-[#EAD5C3]/30 hover:border-[#EAD5C3] text-[#EAD5C3] flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer shadow-md"
-                      aria-label="Previous message"
-                    >
-                      <span className="text-lg">←</span>
-                    </button>
-
-                    {/* Dot Indicators */}
-                    <div className="flex gap-2.5">
-                      {slides.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentSlide(idx)}
-                          className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                            currentSlide === idx ? "w-6 bg-[#EAD5C3]" : "w-2.5 bg-[#EAD5C3]/40 hover:bg-[#EAD5C3]/75"
-                          }`}
-                          aria-label={`Go to slide ${idx + 1}`}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Right Button */}
-                    <button
-                      onClick={nextSlide}
-                      className="w-10 h-10 rounded-full bg-[#EAD5C3]/10 hover:bg-[#EAD5C3]/20 border border-[#EAD5C3]/30 hover:border-[#EAD5C3] text-[#EAD5C3] flex items-center justify-center transition-all duration-300 active:scale-95 cursor-pointer shadow-md"
-                      aria-label="Next message"
-                    >
-                      <span className="text-lg">→</span>
-                    </button>
-                  </div>
+              {/* Header */}
+              <div className="relative z-10 pt-10 pb-4 px-6 text-center animate-fade-in">
+                <p className="font-serif text-[#EAD5C3]/50 text-xs tracking-[0.3em] uppercase mb-2">our memories</p>
+                <h2
+                  className="font-script text-4xl sm:text-5xl md:text-6xl"
+                  style={{
+                    color: "#EAD5C3",
+                    textShadow: "0 2px 20px rgba(234,213,195,0.3)",
+                  }}
+                >
+                  Foto Kita
+                </h2>
+                <div className="mt-3 flex items-center justify-center gap-3">
+                  <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#EAD5C3]/40" />
+                  <span className="text-[#EAD5C3]/40 text-xs">✦</span>
+                  <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#EAD5C3]/40" />
                 </div>
               </div>
 
-              {/* Back Arrow Button */}
+              {/* Photo grid — scattered Polaroid-style */}
+              <div className="relative z-10 px-4 sm:px-8 pb-28 pt-4">
+                <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 sm:gap-4 space-y-3 sm:space-y-4 max-w-4xl mx-auto">
+                  {[
+                    { src: "/photos/foto1.jpg", caption: "Moment kita 💕", rotate: "-rotate-2", delay: "0ms", tall: false },
+                    { src: "/photos/foto2.jpg", caption: "Selalu happy 🌸", rotate: "rotate-1", delay: "60ms", tall: true },
+                    { src: "/photos/foto3.jpg", caption: "Aku sayang kamu ❤️", rotate: "-rotate-1", delay: "120ms", tall: false },
+                    { src: "/photos/foto4.jpg", caption: "Kenangan indah ✨", rotate: "rotate-2", delay: "180ms", tall: true },
+                    { src: "/photos/foto5.jpg", caption: "Together always 💖", rotate: "-rotate-3", delay: "240ms", tall: false },
+                    { src: "/photos/foto6.jpg", caption: "My favourite day 🌹", rotate: "rotate-1", delay: "300ms", tall: true },
+                    { src: "/photos/foto7.jpg", caption: "So beautiful 💗", rotate: "rotate-2", delay: "360ms", all: false },
+                    { src: "/photos/foto8.jpg", caption: "Kamu segalanya 🌟", rotate: "-rotate-1", delay: "420ms", tall: false },
+                  ].map((p, i) => (
+                    <div
+                      key={i}
+                      className={`break-inside-avoid mb-3 sm:mb-4 group ${p.rotate} hover:rotate-0 transition-all duration-500 hover:scale-[1.04] hover:z-20 relative`}
+                      style={{
+                        animation: `slideUpFade 0.6s ease-out ${p.delay} both`,
+                        transformOrigin: "center center",
+                      }}
+                    >
+                      {/* Polaroid frame */}
+                      <div
+                        className="rounded-sm shadow-[0_8px_30px_rgba(0,0,0,0.55)] border border-white/10"
+                        style={{
+                          background: "linear-gradient(160deg, #FDFBF7 0%, #F0EAE2 100%)",
+                          padding: "8px 8px 36px 8px",
+                        }}
+                      >
+                        {/* Photo area */}
+                        <div
+                          className={`relative w-full overflow-hidden rounded-[2px] bg-[#111111] ${p.tall ? "aspect-[3/4]" : "aspect-[4/3]"}`}
+                        >
+                          <img
+                            src={p.src}
+                            alt={p.caption}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={(e) => {
+                              const el = e.target as HTMLImageElement;
+                              el.style.display = "none";
+                            }}
+                          />
+                          {/* Placeholder when no image */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 pointer-events-none">
+                            <span className="text-3xl opacity-20 select-none">📷</span>
+                            <span className="text-[#EAD5C3]/15 text-[10px] font-sans select-none">foto {i + 1}</span>
+                          </div>
+                          {/* Subtle gloss overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none rounded-[2px]" />
+                        </div>
+                      </div>
+
+                      {/* Tape decoration on top — alternating */}
+                      <div
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-10 h-5 rounded-sm opacity-60 pointer-events-none"
+                        style={{
+                          background: i % 2 === 0
+                            ? "rgba(234,213,195,0.55)"
+                            : "rgba(220,180,180,0.45)",
+                          transform: `translateX(-50%) rotate(${i % 3 === 0 ? -8 : i % 3 === 1 ? 4 : -2}deg)`,
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Back button */}
               <button
                 onClick={() => switchTab("to")}
-                className="absolute bottom-7 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full border border-[#EAD5C3]/50 text-[#EAD5C3]/80 hover:border-[#EAD5C3] hover:text-[#EAD5C3] hover:bg-[#EAD5C3]/10 transition-all duration-300 cursor-pointer flex items-center gap-2 z-30 animate-slide-up"
-                style={{ animationDelay: "600ms" }}
+                className="fixed bottom-7 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full border border-[#EAD5C3]/50 text-[#EAD5C3]/80 hover:border-[#EAD5C3] hover:text-[#EAD5C3] hover:bg-[#EAD5C3]/10 transition-all duration-300 cursor-pointer flex items-center gap-2 z-30 animate-slide-up backdrop-blur-sm"
+                style={{ animationDelay: "700ms" }}
               >
                 <span className="text-xl">←</span>
               </button>
@@ -1003,7 +1024,7 @@ export default function Home() {
           )}
           {/* LOVE TAB: "This song is for you" — YouTube with lace frame */}
           {activeTab === "love" && (
-            <div className="fixed inset-0 z-50 overflow-hidden flex" style={{ background: "#3A2825" }}>
+            <div className="fixed inset-0 z-50 overflow-hidden flex" style={{ background: "#0A0A0A" }}>
 
               {/* Left panel — cream cable-knit texture */}
               <div
@@ -1166,274 +1187,304 @@ export default function Home() {
               </button>
             </div>
           )}
-          {/* OF TAB: "of" — Birthday Privileges coupon tickets */}
+          {/* OF TAB: "About You" — Redesigned Vintage Scrapbook Pinboard */}
           {activeTab === "of" && (
-            <div className="fixed inset-0 z-50 overflow-hidden flex bg-[#3E2E2B]">
-              
-              {/* Embossed Lace Panel on the Right */}
-              <div className="absolute right-0 top-0 bottom-0 w-[15%] hidden md:block overflow-hidden pointer-events-none select-none z-10">
-                <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 120 800">
-                  <rect width="100%" height="100%" fill="#EBD8C8" />
-                  <line x1="0" y1="0" x2="0" y2="800" stroke="#FFF" strokeWidth="2" opacity="0.4" />
-                  <line x1="2" y1="0" x2="2" y2="800" stroke="#8A6E59" strokeWidth="1" opacity="0.2" />
 
-                  {/* Repeating embossed floral pattern */}
-                  {Array.from({ length: 6 }).map((_, idx) => {
-                    const yOffset = idx * 140 + 30;
-                    return (
-                      <g key={idx} transform={`translate(10, ${yOffset})`}>
-                        {/* Embossed shadow */}
-                        <path
-                          d="M 50 10 C 30 10, 10 25, 10 50 C 10 75, 30 90, 50 90 C 70 90, 90 75, 90 50 C 90 25, 70 10, 50 10 Z 
-                             M 50 20 C 65 20, 80 32, 80 50 C 80 68, 65 80, 50 80 C 35 80, 20 68, 20 50 C 20 32, 35 20, 50 20 Z"
-                          stroke="#5C4233"
-                          strokeWidth="1.5"
-                          opacity="0.12"
-                          fill="none"
-                        />
-                        <path
-                          d="M 50 35 C 42 35, 35 42, 35 50 C 35 58, 42 65, 50 65 C 58 65, 65 58, 65 50 C 65 42, 58 35, 50 35 Z"
-                          stroke="#5C4233"
-                          strokeWidth="1"
-                          opacity="0.12"
-                          fill="none"
-                        />
-                        <path
-                          d="M 49 9 C 29 9, 9 24, 9 49 C 9 74, 29 89, 49 89 C 69 89, 89 74, 89 49 C 89 24, 69 9, 49 9 Z 
-                             M 49 19 C 64 19, 79 31, 79 49 C 79 67, 64 79, 49 79 C 34 79, 19 67, 19 49 C 19 31, 34 19, 49 19 Z"
-                          stroke="#FFF"
-                          strokeWidth="1.5"
-                          opacity="0.55"
-                          fill="none"
-                        />
-                        <path
-                          d="M 49 34 C 41 34, 34 41, 34 49 C 34 57, 41 64, 49 64 C 57 64, 64 57, 64 49 C 64 41, 57 34, 49 34 Z"
-                          stroke="#FFF"
-                          strokeWidth="1"
-                          opacity="0.55"
-                          fill="none"
-                        />
-                      </g>
-                    );
-                  })}
-                </svg>
+            <div
+              onClick={spawnAboutYouHeart}
+              className="fixed inset-0 z-50 overflow-y-auto select-none cursor-pointer"
+              style={{
+                background: "radial-gradient(circle at center, #2C1A1A 0%, #150A0A 100%)",
+                backgroundImage: `
+                  radial-gradient(circle at 50% 30%, rgba(78, 24, 24, 0.45) 0%, rgba(21, 10, 10, 0.95) 75%),
+                  repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.15) 1px, rgba(0, 0, 0, 0.15) 2px),
+                  repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0, 0, 0, 0.15) 1px, rgba(0, 0, 0, 0.15) 2px)
+                `,
+                backgroundSize: "auto, 16px 16px, 16px 16px"
+              }}
+            >
+              {/* Interactive Hearts Overlay */}
+              <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+                {aboutYouHearts.map((heart) => (
+                  <span
+                    key={heart.id}
+                    className="absolute select-none pointer-events-none"
+                    style={{
+                      left: heart.x,
+                      top: heart.y,
+                      fontSize: `${heart.size}px`,
+                      animation: "float-up-fade 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards",
+                    }}
+                  >
+                    {heart.emoji}
+                  </span>
+                ))}
               </div>
 
-              {/* Decorative Flowers and Twigs Background */}
-              <div className="absolute inset-0 -z-10 pointer-events-none select-none opacity-40 md:opacity-50">
-                {/* Left flower */}
-                <div className="absolute top-16 left-6 md:left-20 w-44 sm:w-60 h-44 sm:h-60">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    <path d="M100 100 Q60 50, 40 40 T20 60 Q30 90, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q80 40, 90 20 T120 30 Q130 60, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q120 50, 150 40 T170 70 Q140 90, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q130 90, 160 110 T150 140 Q110 130, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q90 140, 90 170 T60 160 Q50 120, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q50 110, 30 130 T40 150 Q70 140, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q90 70, 75 55" stroke="#EAD5C3" strokeWidth="1.5" fill="none" />
-                    <circle cx="75" cy="55" r="2" fill="#EAD5C3" />
-                    <path d="M100 100 Q96 72, 92 50" stroke="#EAD5C3" strokeWidth="1.5" fill="none" />
-                    <circle cx="92" cy="50" r="2" fill="#EAD5C3" />
-                    <path d="M100 100 Q105 72, 115 55" stroke="#EAD5C3" strokeWidth="1.5" fill="none" />
-                    <circle cx="115" cy="55" r="2" fill="#EAD5C3" />
-                  </svg>
-                </div>
-
-                {/* Right flower */}
-                <div className="absolute top-10 right-[18%] md:right-[22%] w-44 sm:w-60 h-44 sm:h-60">
-                  <svg viewBox="0 0 200 200" className="w-full h-full transform rotate-45 scale-x-[-1]">
-                    <path d="M100 100 Q60 50, 40 40 T20 60 Q30 90, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q80 40, 90 20 T120 30 Q130 60, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q120 50, 150 40 T170 70 Q140 90, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q130 90, 160 110 T150 140 Q110 130, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q90 140, 90 170 T60 160 Q50 120, 100 100" fill="#2E0A0A" />
-                    <path d="M100 100 Q50 110, 30 130 T40 150 Q70 140, 100 100" fill="#3B0D0D" />
-                    <path d="M100 100 Q90 70, 75 55" stroke="#EAD5C3" strokeWidth="1.5" fill="none" />
-                    <circle cx="75" cy="55" r="2" fill="#EAD5C3" />
-                    <path d="M100 100 Q96 72, 92 50" stroke="#EAD5C3" strokeWidth="1.5" fill="none" />
-                    <circle cx="92" cy="50" r="2" fill="#EAD5C3" />
-                  </svg>
-                </div>
-
-                {/* Stems/Twigs with purple flowers */}
-                <svg viewBox="0 0 1000 600" className="absolute inset-0 w-full h-full" fill="none">
-                  <path d="M 80 450 Q 230 380, 180 300 T 130 120" stroke="#2B1A1A" strokeWidth="1.5" />
-                  <circle cx="140" cy="200" r="3.5" fill="#6E5568" />
-                  <circle cx="195" cy="330" r="3.5" fill="#6E5568" />
-                  <circle cx="185" cy="260" r="3" fill="#6E5568" />
-                  
-                  <path d="M 720 450 Q 580 350, 630 280 T 710 140" stroke="#2B1A1A" strokeWidth="1.5" />
-                  <circle cx="650" cy="310" r="3.5" fill="#6E5568" />
-                  <circle cx="620" cy="260" r="3.5" fill="#6E5568" />
-                  <circle cx="670" cy="200" r="3" fill="#6E5568" />
-
-                  <path d="M 430 340 Q 460 290, 400 240" stroke="#2B1A1A" strokeWidth="1" />
-                  <circle cx="415" cy="265" r="3.5" fill="#6E5568" />
-                  <circle cx="448" cy="310" r="2.5" fill="#6E5568" />
-                </svg>
-              </div>
-
-              {/* Content — Centered */}
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 sm:gap-8 md:gap-10 px-4 sm:px-8 pt-28 pb-20 sm:py-16 overflow-y-auto">
+              {/* Page Container */}
+              <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-16 gap-8">
                 
-                {/* Title */}
-                <h2
-                  className="font-script text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-[#EAD5C3] text-center tracking-wide animate-slide-down"
-                  style={{ animationDelay: "200ms" }}
-                >
-                  Birthday Privileges
-                </h2>
+                {/* Header */}
+                <div className="text-center animate-slide-down" style={{ animationDelay: "100ms" }}>
+                  <h2
+                    className="font-script text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-transparent bg-gradient-to-b from-[#FFF2E6] via-[#EAD5C3] to-[#C89B9B] bg-clip-text filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]"
+                  >
+                    About You
+                  </h2>
+                  <div className="mt-4 flex items-center justify-center gap-3">
+                    <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-[#EAD5C3]/40" />
+                    <span className="text-[#D4AF37] text-xs font-serif">❦</span>
+                    <div className="h-[1px] w-20 bg-gradient-to-l from-transparent to-[#EAD5C3]/40" />
+                  </div>
+                  <p className="text-[10px] text-[#EAD5C3]/25 mt-2 italic font-serif">
+                    (tap anywhere to scatter love petals)
+                  </p>
+                </div>
 
-                {/* 2x2 Ticket Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-3xl justify-items-center">
-                  {[
-                    { id: 0, title: "MOVIE NIGHT" },
-                    { id: 1, title: "GAME MARATHON" },
-                    { id: 2, title: "FREE GIFT" },
-                    { id: 3, title: "'YES' DAY" },
-                  ].map((ticket) => {
-                    const isClaimed = !!claimedTickets[ticket.id];
-                    return (
+                {/* Scrapbook Board Grid Layout */}
+                <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-6 px-2">
+
+                  {/* LEFT COLUMN: 4 Letters pinned to board */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 w-full lg:w-[32%] justify-items-center lg:justify-items-end">
+                    {[
+                      { 
+                        title: "Sweet Smile", 
+                        text: "Senyummu yang selalu bikin hari-hariku jadi jauh lebih cerah 🌸", 
+                        rotate: "rotate-[-2deg]", 
+                        bg: "linear-gradient(to bottom, #FAF6EE 0%, #F3E6CE 100%)",
+                        border: "rgba(184, 134, 11, 0.35)", 
+                        num: "Ⅰ",
+                        delay: "200ms"
+                      },
+                      { 
+                        title: "Laugh & Joy", 
+                        text: "Caramu ketawa yang bikin aku ikut bahagia tiap saat 😄", 
+                        rotate: "rotate-[3deg]", 
+                        bg: "linear-gradient(to bottom, #FFF3F5 0%, #F5D6DA 100%)",
+                        border: "rgba(192, 138, 147, 0.4)", 
+                        num: "Ⅱ",
+                        delay: "300ms"
+                      },
+                      { 
+                        title: "Sincere Heart", 
+                        text: "Ketulusanmu dalam setiap hal kecil yang kamu lakukan ❤️", 
+                        rotate: "rotate-[-1deg]", 
+                        bg: "linear-gradient(to bottom, #FAF6EE 0%, #F3E6CE 100%)",
+                        border: "rgba(184, 134, 11, 0.35)", 
+                        num: "Ⅲ",
+                        delay: "400ms"
+                      },
+                      { 
+                        title: "Deep Care", 
+                        text: "Cara kamu perhatiin aku padahal kamu sendiri lagi capek 🥺", 
+                        rotate: "rotate-[2deg]", 
+                        bg: "linear-gradient(to bottom, #EBF3F5 0%, #D0E4E8 100%)",
+                        border: "rgba(123, 146, 166, 0.4)", 
+                        num: "Ⅳ",
+                        delay: "500ms"
+                      }
+                    ].map((card, i) => (
                       <div
-                        key={ticket.id}
-                        onClick={() => {
-                          if (!isClaimed) {
-                            setClaimedTickets((prev) => ({ ...prev, [ticket.id]: true }));
-                            
-                            // Play romantic claimed note
-                            if (audioCtxRef.current) {
-                              const time = audioCtxRef.current.currentTime;
-                              const osc1 = audioCtxRef.current.createOscillator();
-                              const osc2 = audioCtxRef.current.createOscillator();
-                              const gain = audioCtxRef.current.createGain();
-                              
-                              osc1.type = "sine";
-                              osc2.type = "sine";
-                              osc1.frequency.setValueAtTime(523.25, time); // C5
-                              osc2.frequency.setValueAtTime(659.25, time + 0.08); // E5
-                              
-                              gain.gain.setValueAtTime(0, time);
-                              gain.gain.linearRampToValueAtTime(0.04, time + 0.04);
-                              gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.5);
-                              
-                              osc1.connect(gain);
-                              osc2.connect(gain);
-                              gain.connect(audioCtxRef.current.destination);
-                              
-                              osc1.start(time);
-                              osc2.start(time + 0.08);
-                              osc1.stop(time + 0.5);
-                              osc2.stop(time + 0.5);
-                            }
-                          }
-                        }}
-                        className={`relative cursor-pointer select-none group transition-all duration-300 animate-scale-up ${
-                          isClaimed ? "opacity-75 scale-[0.98]" : "hover:scale-[1.02] hover:-translate-y-0.5"
-                        }`}
+                        key={i}
+                        className={`w-full max-w-[270px] aspect-[4/3] relative rounded-md shadow-[0_12px_28px_rgba(0,0,0,0.5)] border border-[#FFF]/10 transition-all duration-500 hover:scale-[1.06] hover:rotate-0 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.65)] hover:z-30 cursor-pointer ${card.rotate} animate-scale-up`}
                         style={{
-                          width: "clamp(240px, 80vw, 300px)",
-                          height: "clamp(110px, 30vw, 135px)",
-                          animationDelay: `${250 + ticket.id * 85}ms`,
+                          background: card.bg,
+                          animationDelay: card.delay,
                         }}
                       >
-                        {/* SVG Ticket Template with high-fidelity path notches */}
-                        <svg
-                          viewBox="0 0 300 135"
-                          className="w-full h-full drop-shadow-md text-[#F5EDE0] fill-current"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M 10 0
-                               H 210
-                               A 8 8 0 0 0 226 0
-                               H 290
-                               A 10 10 0 0 1 300 10
-                               V 57.5
-                               A 10 10 0 0 0 300 77.5
-                               V 125
-                               A 10 10 0 0 1 290 135
-                               H 226
-                               A 8 8 0 0 0 210 135
-                               H 10
-                               A 10 10 0 0 1 0 125
-                               V 77.5
-                               A 10 10 0 0 0 0 57.5
-                               V 10
-                               A 10 10 0 0 1 10 0
-                               Z"
-                          />
-                          
-                          {/* Perforation vertical dotted line */}
-                          <line
-                            x1="218"
-                            y1="8"
-                            x2="218"
-                            y2="127"
-                            stroke="#3E2E2B"
-                            strokeWidth="1.8"
-                            strokeDasharray="4 5"
-                            opacity="0.45"
-                          />
-                        </svg>
-
-                        {/* Ticket Content Container */}
-                        <div className="absolute inset-0 flex text-[#3E2E2B]">
-                          <div className="w-[218px] flex items-center justify-center px-4">
-                            <span className="font-serif text-lg sm:text-2xl font-bold tracking-widest text-center leading-tight">
-                              {ticket.title}
-                            </span>
-                          </div>
-
-                          {/* Right area: Vertical Barcode stub */}
-                          <div className="w-[82px] flex items-center justify-center gap-2 pr-2 relative">
-                            {/* Barcode lines */}
-                            <div className="flex items-center gap-[1.5px] opacity-75 h-[80px]">
-                              {[2, 1, 3, 1, 4, 1, 2, 1, 3, 2, 1, 4, 2].map((w, idx) => (
-                                <div
-                                  key={idx}
-                                  className="bg-[#3E2E2B] h-full"
-                                  style={{ width: `${w * 0.8}px` }}
-                                />
-                              ))}
-                            </div>
-                            
-                            {/* Vertical numbers stub rotated */}
-                            <span
-                              className="font-sans text-[7.5px] tracking-widest uppercase opacity-75 select-none"
-                              style={{
-                                writingMode: "vertical-rl",
-                                transform: "rotate(180deg)",
-                              }}
-                            >
-                              0 123456 789111
-                            </span>
-                          </div>
+                        {/* Brass Thumbtack with shadow */}
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 z-20">
+                          {/* Tack shadow */}
+                          <div className="absolute top-2.5 left-1 w-2.5 h-1.5 bg-black/45 blur-[0.6px] rounded-full transform rotate-12" />
+                          {/* Tack head */}
+                          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#FFD700] via-[#C5A029] to-[#8B7500] border border-[#B8860B]/70 shadow-sm" />
+                          {/* Tack center pin shine */}
+                          <div className="absolute top-1 left-1.5 w-1 h-1 rounded-full bg-white/45" />
                         </div>
 
-                        {/* Red Ink APPROVED / CLAIMED Stamp Overlay */}
-                        {isClaimed && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-scale-up">
-                            <div
-                              className="border-[3px] border-double border-[#A52A2A] text-[#A52A2A] px-4 py-1.5 rounded font-serif text-lg font-bold tracking-widest uppercase transform -rotate-12 bg-[#F5EDE0] shadow-sm flex flex-col items-center justify-center leading-none"
-                              style={{
-                                transform: "rotate(-12deg) scale(1.1)",
-                              }}
-                            >
-                              <span>CLAIMED</span>
-                              <span className="text-[9px] tracking-widest mt-1">APPROVED</span>
-                            </div>
+                        {/* Card Internal Layout */}
+                        <div className="w-full h-full p-4 flex flex-col justify-between" style={{ borderColor: card.border }}>
+                          {/* Letterhead */}
+                          <div className="flex justify-between items-center border-b border-black/10 pb-1.5">
+                            <span className="font-script text-[#7A5B4C] text-[15px] tracking-wide font-semibold">
+                              {card.title}
+                            </span>
+                            <span className="font-serif text-[#7A5B4C]/45 text-[10px] tracking-widest font-bold">
+                              {card.num}
+                            </span>
                           </div>
-                        )}
+
+                          {/* Message Body */}
+                          <div className="flex-1 flex items-center justify-center py-2">
+                            <p className="font-serif text-[#1A1A1A]/90 text-xs sm:text-[13px] leading-relaxed text-center italic select-text">
+                              "{card.text}"
+                            </p>
+                          </div>
+
+                          {/* Signature line */}
+                          <div className="text-right text-[8px] font-sans tracking-widest text-[#7A5B4C]/40 uppercase font-semibold">
+                            with love ❦
+                          </div>
+                        </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+
+                  {/* CENTER PHOTO: Ornate Baroque Gold Exhibition Frame */}
+                  <div className="shrink-0 flex flex-col items-center gap-5 z-20 my-4 lg:my-0">
+                    <div className="relative group">
+
+                      {/* Heavy Gold Exhibition Frame Container */}
+                      <div
+                        className="relative shadow-[0_30px_75px_rgba(0,0,0,0.85)] border-[8px] double border-gradient transition-all duration-700 ease-out group-hover:scale-[1.04] group-hover:rotate-[1deg] group-hover:shadow-[0_35px_90px_rgba(212,175,85,0.18)]"
+                        style={{
+                          background: "linear-gradient(135deg, #1C0A0A 0%, #0F0505 100%)",
+                          padding: "16px 16px 20px 16px",
+                          width: "clamp(220px, 46vw, 260px)",
+                          borderRadius: "2px",
+                        }}
+                      >
+
+                        {/* Image Frame */}
+                        <div
+                          className="relative overflow-hidden bg-[#2A1818] border-2 border-[#1A0A0A] shadow-[inset_0_4px_12px_rgba(0,0,0,0.7)]"
+                          style={{ aspectRatio: "3/4", borderRadius: "1px" }}
+                        >
+                          <img
+                            src="/photos/about-you.jpg"
+                            alt="About You"
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                          {/* Shadows inside */}
+                          <div className="absolute inset-0 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] pointer-events-none" />
+                          
+                          {/* Image Placeholder */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+                            <span className="text-5xl opacity-20 animate-pulse text-[#EAD5C3]">📷</span>
+                          </div>
+
+                          {/* Film Shine Sweep */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 pointer-events-none opacity-60 group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                        </div>
+
+                        {/* Bottom Label under photo (Exhibition plaque style) */}
+                        <div className="mt-4 border-t border-[#D4AF37]/25 pt-2.5 text-center flex flex-col gap-0.5 select-none">
+                          <span className="font-script text-[#EAD5C3] text-lg md:text-xl tracking-wide">
+                            my person 💕
+                          </span>
+                          <span className="font-sans text-[7.5px] text-[#D4AF37] tracking-[0.25em] uppercase font-bold">
+                            est. memory
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Small Decorative Hanging Chain loops at the top */}
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex gap-12 pointer-events-none z-10 select-none">
+                      <div className="w-1.5 h-6 border-l border-r border-[#C5A029]/35" />
+                      <div className="w-1.5 h-6 border-l border-r border-[#C5A029]/35" />
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: 4 Letters pinned to board */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6 w-full lg:w-[32%] justify-items-center lg:justify-items-start">
+                    {[
+                      { 
+                        title: "Soft Voice", 
+                        text: "Suaramu yang selalu bikin tenang meski apapun terjadi 🎵", 
+                        rotate: "rotate-[2deg]", 
+                        bg: "linear-gradient(to bottom, #FFF3F5 0%, #F5D6DA 100%)",
+                        border: "rgba(192, 138, 147, 0.4)", 
+                        num: "Ⅴ",
+                        delay: "350ms"
+                      },
+                      { 
+                        title: "Vibrant Energy", 
+                        text: "Semangat kamu yang nular ke aku setiap kali kita ngobrol ✨", 
+                        rotate: "rotate-[-3deg]", 
+                        bg: "linear-gradient(to bottom, #FAF6EE 0%, #F3E6CE 100%)",
+                        border: "rgba(184, 134, 11, 0.35)", 
+                        num: "Ⅵ",
+                        delay: "450ms"
+                      },
+                      { 
+                        title: "Quiet Expressions", 
+                        text: "Cara kamu diem tapi ekspresimu ngomong banyak hal 🥰", 
+                        rotate: "rotate-[1deg]", 
+                        bg: "linear-gradient(to bottom, #FFF3F5 0%, #F5D6DA 100%)",
+                        border: "rgba(192, 138, 147, 0.4)", 
+                        num: "Ⅶ",
+                        delay: "550ms"
+                      },
+                      { 
+                        title: "Perfect You", 
+                        text: "Dan hal terfavorit — kamu itu, kamu yang apa adanya 💖", 
+                        rotate: "rotate-[-2deg]", 
+                        bg: "linear-gradient(to bottom, #FAF6EE 0%, #F3E6CE 100%)",
+                        border: "rgba(184, 134, 11, 0.35)", 
+                        num: "Ⅷ",
+                        delay: "650ms"
+                      }
+                    ].map((card, i) => (
+                      <div
+                        key={i}
+                        className={`w-full max-w-[270px] aspect-[4/3] relative rounded-md shadow-[0_12px_28px_rgba(0,0,0,0.5)] border border-[#FFF]/10 transition-all duration-500 hover:scale-[1.06] hover:rotate-0 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.65)] hover:z-30 cursor-pointer ${card.rotate} animate-scale-up`}
+                        style={{
+                          background: card.bg,
+                          animationDelay: card.delay,
+                        }}
+                      >
+                        {/* Brass Thumbtack with shadow */}
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 z-20">
+                          {/* Tack shadow */}
+                          <div className="absolute top-2.5 left-1 w-2.5 h-1.5 bg-black/45 blur-[0.6px] rounded-full transform rotate-12" />
+                          {/* Tack head */}
+                          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#FFD700] via-[#C5A029] to-[#8B7500] border border-[#B8860B]/70 shadow-sm" />
+                          {/* Tack center pin shine */}
+                          <div className="absolute top-1 left-1.5 w-1 h-1 rounded-full bg-white/45" />
+                        </div>
+
+                        {/* Card Internal Layout */}
+                        <div className="w-full h-full p-4 flex flex-col justify-between" style={{ borderColor: card.border }}>
+                          {/* Letterhead */}
+                          <div className="flex justify-between items-center border-b border-black/10 pb-1.5">
+                            <span className="font-script text-[#7A5B4C] text-[15px] tracking-wide font-semibold">
+                              {card.title}
+                            </span>
+                            <span className="font-serif text-[#7A5B4C]/45 text-[10px] tracking-widest font-bold">
+                              {card.num}
+                            </span>
+                          </div>
+
+                          {/* Message Body */}
+                          <div className="flex-1 flex items-center justify-center py-2">
+                            <p className="font-serif text-[#1A1A1A]/90 text-xs sm:text-[13px] leading-relaxed text-center italic select-text">
+                              "{card.text}"
+                            </p>
+                          </div>
+
+                          {/* Signature line */}
+                          <div className="text-right text-[8px] font-sans tracking-widest text-[#7A5B4C]/40 uppercase font-semibold">
+                            with love ❦
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                 </div>
 
                 {/* Back Button */}
                 <button
-                  onClick={() => switchTab("to")}
-                  className="px-8 py-3 rounded-full border border-[#EAD5C3]/40 text-[#EAD5C3]/70 hover:border-[#EAD5C3] hover:text-[#EAD5C3] hover:bg-[#EAD5C3]/10 transition-all duration-300 cursor-pointer flex items-center gap-2 z-10 animate-slide-up"
-                  style={{ animationDelay: "600ms" }}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent spawning a heart
+                    switchTab("to");
+                  }}
+                  className="mt-6 px-8 py-3 rounded-full border border-[#EAD5C3]/40 text-[#EAD5C3]/75 hover:border-[#EAD5C3] hover:text-[#EAD5C3] hover:bg-[#EAD5C3]/15 transition-all duration-300 cursor-pointer flex items-center gap-2 animate-slide-up backdrop-blur-md z-30 shadow-md"
+                  style={{ animationDelay: "700ms" }}
                 >
                   <span className="text-xl">←</span>
                 </button>
@@ -1442,15 +1493,16 @@ export default function Home() {
           )}
 
 
+
           {/* MY LIFE TAB: "My life" — Letter and Photo filmstrips */}
           {activeTab === "my-life" && (
-            <div className="fixed inset-0 z-50 overflow-hidden flex bg-[#3E2E2B]">
+            <div className="fixed inset-0 z-50 overflow-hidden flex bg-[#080808]">
               
               {/* Vertical Gingham Plaid Panel on the Left */}
               <div
                 className="absolute left-0 top-0 bottom-0 w-[35%] hidden md:block z-10"
                 style={{
-                  backgroundColor: "#9A3B3C",
+                  backgroundColor: "#181818",
                   backgroundImage: `
                     linear-gradient(90deg, rgba(245, 237, 224, 0.85) 50%, transparent 50%),
                     linear-gradient(rgba(245, 237, 224, 0.85) 50%, transparent 50%)
@@ -1475,7 +1527,7 @@ export default function Home() {
 
                 {/* Stems/Twigs with purple flowers */}
                 <svg viewBox="0 0 1000 600" className="absolute inset-0 w-full h-full" fill="none">
-                  <path d="M 450 120 Q 550 180, 520 280 T 580 450" stroke="#2B1A1A" strokeWidth="1.5" />
+                  <path d="M 450 120 Q 550 180, 520 280 T 580 450" stroke="#080808" strokeWidth="1.5" />
                   <circle cx="530" cy="200" r="3.5" fill="#6E5568" />
                   <circle cx="560" cy="300" r="3.5" fill="#6E5568" />
                   <circle cx="570" cy="370" r="3" fill="#6E5568" />
@@ -1558,7 +1610,7 @@ export default function Home() {
                         return (
                           <g key={i}>
                             <circle cx={cx} cy={cy} r="6.5" fill="#F5EDE0" />
-                            <circle cx={cx} cy={cy} r="3" fill="#3E2E2B" opacity="0.15" />
+                            <circle cx={cx} cy={cy} r="3" fill="#080808" opacity="0.15" />
                           </g>
                         );
                       })}
@@ -1575,7 +1627,7 @@ export default function Home() {
                     </div>
 
                     {/* Letter Content */}
-                    <div className="text-[#3E2E2B] font-script text-left h-full flex flex-col justify-between pt-1">
+                    <div className="text-[#111111] font-script text-left h-full flex flex-col justify-between pt-1">
                       <p className="select-text pr-10 sm:pr-14 pl-1 sm:pl-2 pt-1 text-[12px] sm:text-[15px] md:text-[16.5px] leading-[1.35] sm:leading-[1.4] md:leading-[1.55]">
                         Happy birthday, my love. I'm so grateful for you – for your patience, your kindness, and the way you always make things feel lighter just by being around. Thank you for choosing me every day and for loving me in the quiet, simple ways that mean the most. I hope this year brings you everything you've been working toward, and I'll be right here cheering you on, always.
                       </p>
@@ -1603,34 +1655,13 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-
-                {/* Right Side: Two Photo Strips (Fade and slide in after envelope is opened) */}
-                <div className={`flex gap-3 sm:gap-4 items-center justify-center transition-all duration-700 ease-out ${isEnvelopeOpened ? "opacity-100 translate-x-0 scale-100" : "opacity-0 translate-x-12 scale-95 pointer-events-none"}`} style={{ transitionDelay: isEnvelopeOpened ? "300ms" : "0ms" }}>
-                  {/* Strip 1: Cream filmstrip */}
-                  <PhotoStrip
-                    photos={["/assets/photo1.jpg", "/assets/photo5.jpg", "/assets/photo6.jpg"]}
-                    bgStyle={{ backgroundColor: "#F7F3EA" }}
-                    rotateClass="rotate-0 hover:-rotate-1"
-                  />
-
-                  {/* Strip 2: Pink patterned filmstrip */}
-                  <PhotoStrip
-                    photos={["/assets/photo2.jpg", "/assets/photo8.jpg", "/assets/photo9.jpg"]}
-                    bgStyle={{
-                      backgroundColor: "#F5E5E9",
-                      backgroundImage: "radial-gradient(#C6B3B9 0.5px, transparent 0.5px)",
-                      backgroundSize: "6px 6px",
-                    }}
-                    rotateClass="rotate-6 hover:rotate-3 translate-x-1"
-                  />
-                </div>
               </div>
 
 
               {/* Home Navigation button at the bottom center */}
               <button
                 onClick={() => switchTab("to")}
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#F5EDE0] hover:bg-white text-[#3E2E2B] rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 cursor-pointer z-30 animate-slide-up"
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#F5EDE0] hover:bg-white text-[#111111] rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 cursor-pointer z-30 animate-slide-up"
                 style={{ animationDelay: "550ms" }}
                 aria-label="Go to home"
               >
